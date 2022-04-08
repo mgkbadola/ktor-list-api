@@ -1,0 +1,1 @@
+rootProject.name = "me.mgkbadola.ktor-list-api"
