@@ -73,5 +73,6 @@ val TOKEN_URL = "https://id.twitch.tv/oauth2/token?" +
 val GAME_URL = System.getenv("GAME_URL")!!
 val BASE_BODY = System.getenv("BASE_BODY")!!
 
+val POST_AUTH = System.getenv("POST_AUTH")!!
 var TOKEN = "dummy token"
 var EXPIRES_ON = 1L

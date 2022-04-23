@@ -16,7 +16,7 @@ import java.sql.PreparedStatement
 import java.sql.ResultSet
 import java.util.*
 
-fun <T> parseGame(resultSet: T): Game {
+fun <T> parseGame(resultSet: T, client: String?): Game {
     val id: Int
     val name: String
     val category: String
@@ -25,7 +25,7 @@ fun <T> parseGame(resultSet: T): Game {
     val themeS: List<String>
     val platformS: List<String>
     val releaseDates: List<String>
-    val client: String
+    val clienT: String
     when (resultSet) {
         is ResultSet -> {
             id = resultSet.getInt("id")
@@ -69,7 +69,7 @@ fun <T> parseGame(resultSet: T): Game {
                 }
             else
                 listOf()
-            client = resultSet.getString("Client")
+            clienT = resultSet.getString("Client")
         }
         is GameResponse -> {
             id = resultSet.id
@@ -80,11 +80,11 @@ fun <T> parseGame(resultSet: T): Game {
             themeS = resultSet.themes.map { i -> THEMES[i]!! }
             platformS = resultSet.platforms.map { i -> PLATFORMS[i]!! }
             releaseDates = resultSet.release_dates.map { i -> if(i.date == null) "null" else Date(1000L * i.date).toString() }
-            client = "-"
+            clienT = client!!
         }
         else -> throw Exception("Result set obtained is neither of the type java.sql.ResultSet or GameResponse")
     }
-    return Game(id, name, category, modeS, genreS, themeS, platformS, releaseDates, client)
+    return Game(id, name, category, modeS, genreS, themeS, platformS, releaseDates, clienT)
 }
 
 fun generateToken(): String {
@@ -103,7 +103,7 @@ fun generateToken(): String {
 }
 
 @OptIn(InternalAPI::class)
-fun <T> searchGame(query: T, statement: PreparedStatement?, limit: Int = 50): MutableList<Game> {
+fun <T> searchGame(query: T, statement: PreparedStatement?, client: String?, limit: Int = 50): MutableList<Game> {
     val result = mutableListOf<Game>()
     runBlocking {
         val content = async {
@@ -124,7 +124,7 @@ fun <T> searchGame(query: T, statement: PreparedStatement?, limit: Int = 50): Mu
         if (resultContent.isEmpty())
             throw Exception("No games found with that search query")
         for (game in resultContent)
-            result.add(parseGame(game))
+            result.add(parseGame(game, client))
         if(statement != null) {
             statement.setInt(1, resultContent[0].id)
             statement.setString(2, resultContent[0].name)

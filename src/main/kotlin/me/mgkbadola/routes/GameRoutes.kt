@@ -40,9 +40,9 @@ fun Route.gameRouting() {
                     val resultSet = statement.executeQuery()
                     while (resultSet.next()) {
                         if (id == null)
-                            list.add(parseGame(resultSet))
+                            list.add(parseGame(resultSet, null))
                         else
-                            game = parseGame(resultSet)
+                            game = parseGame(resultSet, null)
                     }
                 }
                 else if (type == "search"){
@@ -55,10 +55,10 @@ fun Route.gameRouting() {
                         throw Exception("Query parameter can't be empty")
                     val limit = call.parameters["limit"]
                     if(limit == null)
-                        list.addAll(searchGame(query, null))
+                        list.addAll(searchGame(query, null, null))
                     else{
                         try{
-                            list.addAll(searchGame(query, null, limitCheck(limit.toInt())))
+                            list.addAll(searchGame(query, null, null, limitCheck(limit.toInt())))
                         }
                         catch (ex_: Exception){
                             if(ex_.message!!.contains("For input string"))
@@ -89,6 +89,8 @@ fun Route.gameRouting() {
             var game: Game? = null
             var query: String?
             try {
+                if(call.request.headers["PostAuth"] != POST_AUTH)
+                    throw Exception("Invalid authorization token for post operation")
                 val id = call.parameters["id"] ?: throw Exception("id parameter not mentioned")
                 if (type == "owned" || type == "viewed") {
                     val client = call.parameters["client"] ?: throw Exception("client parameter not mentioned")
@@ -101,7 +103,7 @@ fun Route.gameRouting() {
                     val statement = connection.prepareStatement(query)
                     statement.setString(9, client)
                     try{
-                        game = searchGame(id.toInt(), statement)[0]
+                        game = searchGame(id.toInt(), statement, client)[0]
                     }
                     catch(ex_: Exception){
                         if(ex_.message!!.contains("For input string"))
